@@ -252,7 +252,7 @@ String speech_text = "";
 String speech_text_buffer = "";
 //DynamicJsonDocument chat_doc(1024);
 DynamicJsonDocument chat_doc(1024*10);
-String json_ChatString = "{\"model\": \"gpt-3.5-turbo\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"}]}";
+String json_ChatString = "{\"model\": \"gpt-3.5-turbo-0613\",\"messages\": [{\"role\": \"user\", \"content\": \"""\"}]}";
 
 bool init_chat_doc(const char *data)
 {
@@ -913,8 +913,10 @@ void Wifi_setup() {
 #define LCD_HEIGHT  (240)
 #define LCD_BUF_SIZE (LCD_WIDTH*LCD_HEIGHT*2)
 
+#if defined(USE_LCD_UNIT)
 M5Canvas *canvas;
 static uint16_t sprite_buff[LCD_BUF_SIZE/8];
+#endif
 
 esp_err_t camera_init(){
 
@@ -1022,8 +1024,11 @@ bool camera_capture_and_face_detect(){
     //Serial.printf("Face detected : %d\n", results.size());
 
     isDetected = true;
-
-//    if(servo_home){
+#ifndef USE_LCD_UNIT
+    if(servo_home){
+#else
+    {
+#endif
       fb_data_t rfb;
       rfb.width = fb->width;
       rfb.height = fb->height;
@@ -1032,16 +1037,16 @@ bool camera_capture_and_face_detect(){
       rfb.format = FB_RGB565;
 
       draw_face_boxes(&rfb, &results, face_id);
-//    }
   }
-
-  // if(servo_home){   //サーボ固定時（LCD中央をタップしたとき）のみ、LCDにカメラ画像を表示する
-  //   M5.Display.startWrite();
-  //   M5.Display.setAddrWindow(0, 0, fb->width, fb->height);
-  //   M5.Display.writePixels((uint16_t*)fb->buf, int(fb->len / 2));
-  //   M5.Display.endWrite();
-  // } else {
-
+  }
+#ifndef USE_LCD_UNIT
+  if(servo_home){   //サーボ固定時（LCD中央をタップしたとき）のみ、LCDにカメラ画像を表示する
+    M5.Display.startWrite();
+    M5.Display.setAddrWindow(0, 0, fb->width, fb->height);
+    M5.Display.writePixels((uint16_t*)fb->buf, int(fb->len / 2));
+    M5.Display.endWrite();
+  } //else {
+#else
     int k = 0;
     for(int j = 0; j < LCD_HEIGHT; j += 2) {
       for(int i = 0; i < LCD_WIDTH; i += 2) {
@@ -1053,7 +1058,7 @@ bool camera_capture_and_face_detect(){
     canvas->writePixels((uint16_t*)sprite_buff, int(LCD_BUF_SIZE/8));
     canvas->pushRotateZoom(-90, 1.0, 1.0);
     canvas->endWrite();
-
+#endif
   //}
 
   //Serial.println("<heap size before fb return>");  
@@ -1082,6 +1087,7 @@ void setup()
 //cfg.external_spk_detail.omit_spk_hat    = true; // exclude SPK HAT
   cfg.internal_mic = true;
 #if defined(ENABLE_FACE_DETECT)
+#if defined(USE_LCD_UNIT)
   cfg.external_display.unit_lcd = true;  // default=true. use UnitLCD'
 #if defined ( __M5GFX_M5UNITLCD__ ) // setting for Unit LCD.
   cfg.unit_lcd.pin_sda  = GPIO_NUM_2;
@@ -1090,6 +1096,7 @@ void setup()
   cfg.unit_lcd.i2c_freq = 400000;
 //  cfg.unit_lcd.i2c_freq = 1000000;
   cfg.unit_lcd.i2c_port = I2C_NUM_0;
+#endif
 #endif
 #endif
   M5.begin(cfg);
@@ -1102,7 +1109,7 @@ void setup()
     M5.Speaker.config(spk_cfg);
   }
   M5.Speaker.begin();
-#if defined(ENABLE_FACE_DETECT)
+#if defined(ENABLE_FACE_DETECT) && (USE_LCD_UNIT)
   canvas = new M5Canvas(&M5.Displays(1));
   canvas->createSprite(LCD_WIDTH/2, LCD_HEIGHT/2);
 #endif

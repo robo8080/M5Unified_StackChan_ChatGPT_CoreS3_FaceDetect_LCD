@@ -9,7 +9,9 @@ ronron-ghさんの[M5Unified_StackChan_ChatGPT_Google_CoreS3_FaceDetectExample](
 
 [LCDユニット](https://www.switch-science.com/products/7358/ "Title")をM5Stack CoreS3の PORT.A に接続しておく必要があります。<br>
 Groveケーブルは10㎝ぐらいの短いものを使用してください。<br>
+
 【注意】時々リセットが掛かります。<br>
+platformio.iniの30行目をコメントアウトするとLCDユニットが無くても動きます。<br>
 
 ---
 
